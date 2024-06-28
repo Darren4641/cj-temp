@@ -57,7 +57,7 @@ public class DashboardServiceImpl implements DashboardService {
         Map<String, Long> result = new HashMap<>();
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.termQuery(DATE, today()))
-                .addAggregation(AggregationBuilders.terms(COUNT).field(TYPE))
+                .addAggregation(AggregationBuilders.terms(COUNT).field(TYPE_KEYWORD))
                 .build();
 
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
@@ -93,12 +93,12 @@ public class DashboardServiceImpl implements DashboardService {
         Query query = new NativeSearchQueryBuilder()
                 .addAggregation(AggregationBuilders.filter(TODAY_AGG,
                                 QueryBuilders.matchQuery(DATE, today()))
-                        .subAggregation(AggregationBuilders.terms(TODAY_CUSTOMER_FILTER).field(CUSTOMER)
-                                .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE))))
+                        .subAggregation(AggregationBuilders.terms(TODAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD)
+                                .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE_KEYWORD))))
                 .addAggregation(AggregationBuilders.filter(YESTERDAY_AGG,
                                 QueryBuilders.matchQuery(DATE, yesterday()))
-                        .subAggregation(AggregationBuilders.terms(YESTERDAY_CUSTOMER_FILTER).field(CUSTOMER)
-                                .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE))))
+                        .subAggregation(AggregationBuilders.terms(YESTERDAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD)
+                                .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE_KEYWORD))))
                 .build();
 
         List<Customer> defaultCustomers = getCustomers();
@@ -174,7 +174,7 @@ public class DashboardServiceImpl implements DashboardService {
     public List<Customer> getCustomers() {
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.matchQuery(DATE, today()))
-                .addAggregation(AggregationBuilders.terms(CUSTOMER_FILTER).field(CUSTOMER).size(CUSTOMER_SIZE))
+                .addAggregation(AggregationBuilders.terms(CUSTOMER_FILTER).field(CUSTOMER_KEYWORD).size(CUSTOMER_SIZE))
                 .build();
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
         Aggregations aggregations = searchHits.getAggregations();
@@ -199,14 +199,14 @@ public class DashboardServiceImpl implements DashboardService {
                 .withQuery(QueryBuilders.matchQuery(CUSTOMER, customer))
                 .addAggregation(AggregationBuilders.filter(TODAY_AGG,
                                 QueryBuilders.matchQuery(DATE, today()))
-                        .subAggregation(AggregationBuilders.terms(TODAY_CUSTOMER_FILTER).field(CUSTOMER)
-                                .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE)
-                                        .subAggregation(AggregationBuilders.terms(TODAY_STATUS_FILTER).field(STATUS)))))
+                        .subAggregation(AggregationBuilders.terms(TODAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD)
+                                .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE_KEYWORD)
+                                        .subAggregation(AggregationBuilders.terms(TODAY_STATUS_FILTER).field(STATUS_KEYWORD)))))
                 .addAggregation(AggregationBuilders.filter(YESTERDAY_AGG,
                                 QueryBuilders.matchQuery(DATE, yesterday()))
-                        .subAggregation(AggregationBuilders.terms(YESTERDAY_CUSTOMER_FILTER).field(CUSTOMER)
-                                .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE)
-                                        .subAggregation(AggregationBuilders.terms(YESTERDAY_STATUS_FILTER).field(STATUS)))))
+                        .subAggregation(AggregationBuilders.terms(YESTERDAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD)
+                                .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE_KEYWORD)
+                                        .subAggregation(AggregationBuilders.terms(YESTERDAY_STATUS_FILTER).field(STATUS_KEYWORD)))))
                 .build();
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
 
@@ -300,7 +300,7 @@ public class DashboardServiceImpl implements DashboardService {
                                 .lte(today()))
                         .must(QueryBuilders.matchQuery(STATUS, ABNORMAL)))
                 .addAggregation(AggregationBuilders.terms(DATE_FILTER).field(DATE)
-                        .subAggregation(AggregationBuilders.terms(CUSTOMER_FILTER).field(CUSTOMER)))
+                        .subAggregation(AggregationBuilders.terms(CUSTOMER_FILTER).field(CUSTOMER_KEYWORD)))
                 .build();
 
         List<Customer> defaultCustomers = getCustomers();
@@ -310,7 +310,8 @@ public class DashboardServiceImpl implements DashboardService {
 
         Map<String, Map<String, Long>> dateCustomerCountMap = new HashMap<>();
         dateTerms.getBuckets().forEach(dateBucket -> {
-            String date = dateBucket.getKeyAsString();
+            String date = LocalDateTime.parse(dateBucket.getKeyAsString(), DateTimeFormatter.ISO_DATE_TIME)
+                    .format(DateTimeFormatter.ofPattern(DAY_FORMAT));
 
             Terms customerTerms = dateBucket.getAggregations().get(CUSTOMER_FILTER);
             customerTerms.getBuckets().forEach(customerBucket -> {
@@ -379,10 +380,10 @@ public class DashboardServiceImpl implements DashboardService {
                 .withQuery(QueryBuilders.matchQuery(STATUS, ABNORMAL))
                 .addAggregation(AggregationBuilders.filter(TODAY_AGG,
                                 QueryBuilders.matchQuery(DATE, today()))
-                        .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE)))
+                        .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE_KEYWORD)))
                 .addAggregation(AggregationBuilders.filter(YESTERDAY_AGG,
                                 QueryBuilders.matchQuery(DATE, yesterday()))
-                        .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE)))
+                        .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE_KEYWORD)))
                 .build();
 
         List<String> defaultTypes = getTypes();
@@ -436,11 +437,9 @@ public class DashboardServiceImpl implements DashboardService {
 
     private String dynamicExtractType(String type) {
         if(type != null && type.contains("_")) {
-            if(type.contains(OSS)) {
+            if(type.contains("OSS")) {
                 return type.split("_")[1];
-            }else if(type.contains(SAN) || type.contains(NET)) {
-                return SAN_NET;
-            } else {
+            }else {
                 return type.split("_")[0];
             }
         }
@@ -450,7 +449,7 @@ public class DashboardServiceImpl implements DashboardService {
     private List<String> getTypes() {
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.termQuery(DATE, today()))
-                .addAggregation(AggregationBuilders.terms(TYPE_FILTER).field(TYPE))
+                .addAggregation(AggregationBuilders.terms(TYPE_FILTER).field(TYPE_KEYWORD))
                 .build();
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
         Aggregations aggregations = searchHits.getAggregations();
@@ -463,7 +462,7 @@ public class DashboardServiceImpl implements DashboardService {
     private List<String> getStatuses() {
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.termQuery(DATE, today()))
-                .addAggregation(AggregationBuilders.terms(STATUS_FILTER).field(STATUS))
+                .addAggregation(AggregationBuilders.terms(STATUS_FILTER).field(STATUS_KEYWORD))
                 .build();
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
         Aggregations aggregations = searchHits.getAggregations();
