@@ -1,0 +1,43 @@
+package kr.co.cjdashboard.api.dashboard.model;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
+
+import java.util.Map;
+
+/**
+ * -------------------------------------------------------------------------------------
+ * ::::::'OO::::'OOO::::'OO:::'OO:'OO::::'OO:'OOOOOOOO:::'OOOOOOO::'OO::::'OO:'OO....OO:
+ * :::::: OO:::'OO OO:::. OO:'OO:: OO::::.OO: OO.....OO:'OO.....OO: OO:::: OO: OOO...OO:
+ * :::::: OO::'OO:..OO:::. OOOO::: OO::::.OO: OO::::.OO: OO::::.OO: OO:::: OO: OOOO..OO:
+ * :::::: OO:'OO:::..OO:::. OO:::: OO::::.OO: OOOOOOOO:: OO::::.OO: OO:::: OO: OO.OO.OO:
+ * OO:::: OO: OOOOOOOOO:::: OO:::: OO::::.OO: OO.. OO::: OO::::.OO: OO:::: OO: OO..OOOO:
+ * :OO::::OO: OO.....OO:::: OO:::: OO::::.OO: OO::. OO:: OO::::.OO: OO:::: OO: OO:..OOO:
+ * ::OOOOOO:: OO:::..OO:::: OO::::. OOOOOOO:: OO:::. OO:. OOOOOOO::. OOOOOOO:: OO::..OO:
+ * :......:::..:::::..:::::..::::::.......:::..:::::..:::.......::::.......:::..::::..::
+ * <p>
+ * packageName    : kr.co.cjdashboard.api.dashboard.model
+ * fileName       : totalRegistrationStatusDto
+ * author         : darren
+ * date           : 6/14/24
+ * description    :
+ * ===========================================================
+ * DATE              AUTHOR             NOTE
+ * -----------------------------------------------------------
+ * 6/14/24        darren       최초 생성
+ */
+@Setter
+@Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class TotalRegistrationStatusDto {
+    @JsonProperty(value = "OSS")
+    private Map<String, Long> OSS;
+    @JsonProperty(value = "STO")
+    private Long STO;
+    @JsonProperty(value = "SAN")
+    private Long SAN;
+
+
+}
