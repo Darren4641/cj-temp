@@ -363,6 +363,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
         return searchHits.stream()
+                .filter(uptime -> uptime.getContent().getCustomer() != null)
                 .map(uptime ->
                         UptimeChartDTO.builder()
                                 .customer(customerService.getCustomerName(uptime.getContent().getCustomer()))
@@ -372,7 +373,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .collect(Collectors.toList());
     }
 
-    // 항목 별 Abnormal 전체 건수
+    // 항목 별 Abnormal 전체 건수별
     public List<AbnormalStatusByTypeDto> abnormalStatusByType() {
         List<AbnormalStatusByTypeDto> result = new ArrayList<>();
         Query query = new NativeSearchQueryBuilder()
