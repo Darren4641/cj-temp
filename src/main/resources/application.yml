@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+mode: ${MODE:test}
+
+elasticsearch:
+  username: ${ELASTICSEARCH_USERNAME:elastic}
+  password: ${ELASTICSEARCH_PASSWORD:elasticstack}
+  uris: ${ELASTICSEARCH_URIS:https://perpet.jayutest.best:31037}
+  indexname: ${ELASTICSEARCH_INDEX_NAME:cj-log}
+  api:
+    key: ${ELASTICSEARCH_API_KEY:UGN0QUZKQUJENm5BNzFabHhFcFE6RzhGVFBudUNTNS1tSU5FMHFoTlc3QQ==}
+  ssl:
+    enabled: ${ELASTICSEARCH_SSL_ENABLED:true}
+    keystore:
+      location: ${ELASTICSEARCH_KEYSTORE_LOCATION:/Users/darren/develop/cj/cj-pem/keystore.p12}
+      password: ${ELASTICSEARCH_KEYSTORE_PASSWORD:MTAwNDEwMDQ=}
+    truststore:
+      location: ${ELASTICSEARCH_TRUSTSTORE_LOCATION:/Users/darren/develop/cj/cj-pem/truststore.p12}
+      password: ${ELASTICSEARCH_TRUSTSTORE_PASSWORD:MTAwNDEwMDQ=}
+
+
+
+message:
+  source:
+    basename: i18n/message-kr
+
+cors:
+  allowed-origins: ${CORS_URI:http://localhost:6001,https://jayutest.best:13006,http://jayutest.best:3249,http://10.0.1.204:3249}
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+  allowed-headers: '*'
+  max-age: 3600
+
+logging:
+  level:
+    root: ERROR
+    org:
+      springframework: ERROR
+      elasticsearch: ERROR
