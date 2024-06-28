@@ -67,7 +67,7 @@ public class DashboardServiceImpl implements DashboardService {
         terms.getBuckets().forEach(bucket -> {
             String type = dynamicExtractType(bucket.getKeyAsString());
             if(type.equals(NET)) {
-                type = SAN;
+                type = SAN_NET;
             }
             Long count = bucket.getDocCount();
             result.put(type, result.getOrDefault(type, 0L) + count);
@@ -77,8 +77,8 @@ public class DashboardServiceImpl implements DashboardService {
         result.forEach((type, count) -> {
             if(type.equals(STO)) {
                 totalRegistrationStatusDto.setSTO(count);
-            } else if(type.equals(SAN)) {
-                totalRegistrationStatusDto.setSAN(count);
+            } else if(type.equals(SAN_NET)) {
+                totalRegistrationStatusDto.setSAN_NET(count);
             } else {
                 //OSS
                 ossList.put(type, count);
@@ -437,8 +437,10 @@ public class DashboardServiceImpl implements DashboardService {
 
     private String dynamicExtractType(String type) {
         if(type != null && type.contains("_")) {
-            if(type.contains("OSS")) {
+            if(type.contains(OSS)) {
                 return type.split("_")[1];
+            }else if(type.contains(SAN) || type.contains(NET)) {
+                return SAN_NET;
             }else {
                 return type.split("_")[0];
             }

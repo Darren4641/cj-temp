@@ -74,9 +74,12 @@ public class FieldName {
     public static final String ABNORMAL = "Abnormal";
     public static final String UPTIME = "Uptime";
 
+    public static final String OSS = "OSS";
     public static final String STO = "STO";
     public static final String SAN = "SAN";
     public static final String NET = "NET";
+
+    public static final String SAN_NET = "SAN(NET)";
 
     public static final String CJ = "CJ";
 
