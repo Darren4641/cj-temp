@@ -57,7 +57,7 @@ public class DashboardServiceImpl implements DashboardService {
         Map<String, Long> result = new HashMap<>();
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.termQuery(DATE, today()))
-                .addAggregation(AggregationBuilders.terms(COUNT).field(TYPE))
+                .addAggregation(AggregationBuilders.terms(COUNT).field(TYPE_KEYWORD))
                 .build();
 
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
@@ -67,7 +67,7 @@ public class DashboardServiceImpl implements DashboardService {
         terms.getBuckets().forEach(bucket -> {
             String type = dynamicExtractType(bucket.getKeyAsString());
             if(type.equals(NET)) {
-                type = SAN;
+                type = SAN_NET;
             }
             Long count = bucket.getDocCount();
             result.put(type, result.getOrDefault(type, 0L) + count);
@@ -77,8 +77,8 @@ public class DashboardServiceImpl implements DashboardService {
         result.forEach((type, count) -> {
             if(type.equals(STO)) {
                 totalRegistrationStatusDto.setSTO(count);
-            } else if(type.equals(SAN)) {
-                totalRegistrationStatusDto.setSAN(count);
+            } else if(type.equals(SAN_NET)) {
+                totalRegistrationStatusDto.setSAN_NET(count);
             } else {
                 //OSS
                 ossList.put(type, count);

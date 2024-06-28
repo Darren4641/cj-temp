@@ -36,8 +36,8 @@ public class TotalRegistrationStatusDto {
     private Map<String, Long> OSS;
     @JsonProperty(value = "STO")
     private Long STO;
-    @JsonProperty(value = "SAN")
-    private Long SAN;
+    @JsonProperty(value = "SAN_NET")
+    private Long SAN_NET;
 
 
 }
