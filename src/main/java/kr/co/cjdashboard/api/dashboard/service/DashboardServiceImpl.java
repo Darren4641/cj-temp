@@ -93,16 +93,17 @@ public class DashboardServiceImpl implements DashboardService {
         Query query = new NativeSearchQueryBuilder()
                 .addAggregation(AggregationBuilders.filter(TODAY_AGG,
                                 QueryBuilders.matchQuery(DATE, today()))
-                        .subAggregation(AggregationBuilders.terms(TODAY_CUSTOMER_FILTER).field(CUSTOMER)
-                                .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE))))
+                        .subAggregation(AggregationBuilders.terms(TODAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD)
+                                .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE_KEYWORD))))
                 .addAggregation(AggregationBuilders.filter(YESTERDAY_AGG,
                                 QueryBuilders.matchQuery(DATE, yesterday()))
-                        .subAggregation(AggregationBuilders.terms(YESTERDAY_CUSTOMER_FILTER).field(CUSTOMER)
-                                .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE))))
+                        .subAggregation(AggregationBuilders.terms(YESTERDAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD)
+                                .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE_KEYWORD))))
                 .build();
 
         List<Customer> defaultCustomers = getCustomers();
-        List<String> defaultTypes = getTypes();
+        List<String> defaultTypes = new ArrayList<>();
+        getTypes().forEach(defaultType -> defaultTypes.add(extractTypePrefix(defaultType)));
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
         Aggregations aggregations = searchHits.getAggregations();
 
@@ -121,7 +122,7 @@ public class DashboardServiceImpl implements DashboardService {
                                 .merge(type, count, Long::sum);
                     });
                     defaultTypes.forEach(defaultType ->
-                            todayStatusCountMap.get(customer).putIfAbsent(extractTypePrefix(defaultType), 0L));
+                            todayStatusCountMap.get(customer).putIfAbsent(defaultType, 0L));
                 });
         Map<String, Map<String, Long>> yesterdayStatusCountMap = new HashMap<>();
         Filter yesterdayFilter = aggregations.get(YESTERDAY_AGG);
@@ -137,7 +138,7 @@ public class DashboardServiceImpl implements DashboardService {
                                 .merge(type, count, Long::sum);
                     });
                     defaultTypes.forEach(defaultType ->
-                            yesterdayStatusCountMap.get(customer).putIfAbsent(extractTypePrefix(defaultType), 0L));
+                            yesterdayStatusCountMap.get(customer).putIfAbsent(defaultType, 0L));
                 });
         //기본 Type 삽입
         defaultCustomers.forEach(defaultCustomer -> {
@@ -152,11 +153,12 @@ public class DashboardServiceImpl implements DashboardService {
             List<CollectionStatusByCustomerDto.CollectionStatusByCustomerDetailDto> dataList = new ArrayList<>();
             countMap.forEach((type, todayCount) -> {
                 long yesterdayCount = 0;
-                if(yesterdayStatusCountMap.get(customer) != null && yesterdayStatusCountMap.get(customer).get(type) != null) {
-                    yesterdayCount = yesterdayStatusCountMap.get(customer).get(type);
+                String extractType = extractTypePrefix(type);
+                if(yesterdayStatusCountMap.get(customer) != null && yesterdayStatusCountMap.get(customer).get(extractType) != null) {
+                    yesterdayCount = yesterdayStatusCountMap.get(customer).get(extractType);
                 }
                 dataList.add(CollectionStatusByCustomerDto.CollectionStatusByCustomerDetailDto.builder()
-                        .type(type)
+                        .type(extractType)
                         .todayCount(todayCount)
                         .yesterdayCount(yesterdayCount)
                         .build());
@@ -430,6 +432,8 @@ public class DashboardServiceImpl implements DashboardService {
     private String extractTypePrefix(String type) {
         if (type != null && type.contains("_")) {
             return type.split("_")[0];
+        }else if(type.contains(SAN) || type.contains(NET)) {
+            return SAN_NET;
         }
         return type;
     }
