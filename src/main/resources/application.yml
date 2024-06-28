@@ -6,12 +6,12 @@ mode: ${MODE:test}
 elasticsearch:
   username: ${ELASTICSEARCH_USERNAME:elastic}
   password: ${ELASTICSEARCH_PASSWORD:elasticstack}
-  uris: ${ELASTICSEARCH_URIS:https://perpet.jayutest.best:31037}
+  uris: ${ELASTICSEARCH_URIS:http://10.0.3.254:30001}
   indexname: ${ELASTICSEARCH_INDEX_NAME:cj-log}
   api:
     key: ${ELASTICSEARCH_API_KEY:UGN0QUZKQUJENm5BNzFabHhFcFE6RzhGVFBudUNTNS1tSU5FMHFoTlc3QQ==}
   ssl:
-    enabled: ${ELASTICSEARCH_SSL_ENABLED:true}
+    enabled: ${ELASTICSEARCH_SSL_ENABLED:false}
     keystore:
       location: ${ELASTICSEARCH_KEYSTORE_LOCATION:/Users/darren/develop/cj/cj-pem/keystore.p12}
       password: ${ELASTICSEARCH_KEYSTORE_PASSWORD:MTAwNDEwMDQ=}
