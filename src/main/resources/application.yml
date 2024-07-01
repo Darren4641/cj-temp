@@ -3,6 +3,11 @@ server:
 
 mode: ${MODE:test}
 
+spring:
+  output:
+    ansi:
+      enabled: always
+
 elasticsearch:
   username: ${ELASTICSEARCH_USERNAME:elastic}
   password: ${ELASTICSEARCH_PASSWORD:elasticstack}
