@@ -3,6 +3,11 @@ server:
 
 mode: ${MODE:test}
 
+spring:
+  output:
+    ansi:
+      enabled: always
+
 elasticsearch:
   username: ${ELASTICSEARCH_USERNAME:elastic}
   password: ${ELASTICSEARCH_PASSWORD:elasticstack}
@@ -26,7 +31,7 @@ message:
     basename: i18n/message-kr
 
 cors:
-  allowed-origins: ${CORS_URI:http://localhost:6001,https://jayutest.best:13006,http://jayutest.best:3249,http://10.0.1.204:3249}
+  allowed-origins: ${CORS_URI:http://10.0.3.254:31824,http://localhost:6001,https://jayutest.best:13006,http://jayutest.best:3249,http://10.0.1.204:3249}
   allowed-methods: GET,POST,PUT,DELETE,OPTIONS
   allowed-headers: '*'
   max-age: 3600

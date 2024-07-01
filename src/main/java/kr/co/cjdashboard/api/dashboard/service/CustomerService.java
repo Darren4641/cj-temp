@@ -77,6 +77,6 @@ public class CustomerService {
     }
 
     public String getCustomerName(String customerId) {
-        return customerMap.get(customerId).getName();
+        return customerMap.get(customerId) != null ? customerMap.get(customerId).getName() : null;
     }
 }
