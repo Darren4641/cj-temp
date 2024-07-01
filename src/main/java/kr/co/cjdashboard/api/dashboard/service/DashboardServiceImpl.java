@@ -51,10 +51,6 @@ public class DashboardServiceImpl implements DashboardService {
     private final ElasticsearchRestTemplate elasticsearchRestTemplate;
     private final CustomerService customerService;
 
-    @PostConstruct
-    public void init() {
-        getCustomers();
-    }
 
     //전체 등록 현황
     public TotalRegistrationStatusDto getTotalRegistrationStatus() {
