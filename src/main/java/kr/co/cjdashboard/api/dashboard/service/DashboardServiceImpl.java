@@ -325,8 +325,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         Map<String, Map<String, Long>> dateCustomerCountMap = new HashMap<>();
         dateTerms.getBuckets().forEach(dateBucket -> {
-            String date = LocalDateTime.parse(dateBucket.getKeyAsString(), DateTimeFormatter.ISO_DATE_TIME)
-                    .format(DateTimeFormatter.ofPattern(DAY_FORMAT));
+            String date = dateBucket.getKeyAsString();
 
             Terms customerTerms = dateBucket.getAggregations().get(CUSTOMER_FILTER);
             customerTerms.getBuckets().forEach(customerBucket -> {
