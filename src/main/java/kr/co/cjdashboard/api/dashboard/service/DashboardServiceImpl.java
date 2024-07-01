@@ -16,8 +16,7 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilde
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -51,6 +50,11 @@ import static kr.co.cjdashboard.util.MessageUtil.exceptionMessage;
 public class DashboardServiceImpl implements DashboardService {
     private final ElasticsearchRestTemplate elasticsearchRestTemplate;
     private final CustomerService customerService;
+
+    @PostConstruct
+    public void init() {
+        getCustomers();
+    }
 
     //전체 등록 현황
     public TotalRegistrationStatusDto getTotalRegistrationStatus() {
