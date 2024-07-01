@@ -16,9 +16,8 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilde
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static kr.co.cjdashboard.api.dashboard.constant.FieldName.*;
@@ -210,6 +209,7 @@ public class DashboardServiceImpl implements DashboardService {
         if(customerService.getCustomerName(customer) == null) {
             throw new InvalidException(exceptionMessage("customer.not_found"));
         }
+
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.matchQuery(CUSTOMER, customer))
                 .addAggregation(AggregationBuilders.filter(TODAY_AGG,
@@ -282,28 +282,36 @@ public class DashboardServiceImpl implements DashboardService {
 
         //전일 대비 계산 및 DTO생성
         todayStatusCountMap.forEach((type, statusCountMap) -> {
+            AtomicBoolean isSave = new AtomicBoolean(false);
             List<StatusByCustomerDTO.StatusData> statusDataList = new ArrayList<>();
             statusCountMap.forEach((status, todayCount) -> {
-                long yesterdayCount = 0;
-                if(yesterdayStatusCountMap.get(type) != null && yesterdayStatusCountMap.get(type).get(status) != null) {
-                    yesterdayCount = yesterdayStatusCountMap.get(type).get(status);
+                if(type.equals(LINUX) || type.equals(WINDOWS) || type.equals(AIX) || type.equals(SAN_NET) || type.equals(STO)) {
+                    isSave.set(true);
+                    long yesterdayCount = 0;
+                    if(yesterdayStatusCountMap.get(type) != null && yesterdayStatusCountMap.get(type).get(status) != null) {
+                        yesterdayCount = yesterdayStatusCountMap.get(type).get(status);
+                    }
+                    statusDataList.add(StatusByCustomerDTO.StatusData.builder()
+                            .status(status)
+                            .todayCount(todayCount)
+                            .yesterdayCount(yesterdayCount)
+                            .build());
                 }
-                statusDataList.add(StatusByCustomerDTO.StatusData.builder()
-                        .status(status)
-                        .todayCount(todayCount)
-                        .yesterdayCount(yesterdayCount)
-                        .build());
             });
-            typeDataList.add(StatusByCustomerDTO.TypeData.builder()
-                    .type(type)
-                    .data(statusDataList)
-                    .build());
+            if(isSave.get()) {
+                typeDataList.add(StatusByCustomerDTO.TypeData.builder()
+                        .type(type)
+                        .data(statusDataList)
+                        .build());
+            }
+
         });
 
         return StatusByCustomerDTO.builder()
                 .customer(customerService.getCustomerName(customer))
                 .data(typeDataList)
                 .build();
+
     }
     // 고객사별 Abnormal 건수 추이
     public List<AbnormalStatusByCustomerDto> abnormalStatusByCustomer() {
@@ -428,15 +436,17 @@ public class DashboardServiceImpl implements DashboardService {
         });
 
         todayTypeCountMap.forEach((type, todayCount) -> {
-            long yesterdayCount = 0;
-            if(yesterdayTypeCountMap.get(type) != null) {
-                yesterdayCount = yesterdayTypeCountMap.get(type);
+            if(type.equals(LINUX) || type.equals(WINDOWS) || type.equals(AIX) || type.equals(SAN_NET) || type.equals(STO)) {
+                long yesterdayCount = 0;
+                if(yesterdayTypeCountMap.get(type) != null) {
+                    yesterdayCount = yesterdayTypeCountMap.get(type);
+                }
+                result.add(AbnormalStatusByTypeDto.builder()
+                        .type(type)
+                        .todayCount(todayCount)
+                        .yesterdayCount(yesterdayCount)
+                        .build());
             }
-            result.add(AbnormalStatusByTypeDto.builder()
-                    .type(type)
-                    .todayCount(todayCount)
-                    .yesterdayCount(yesterdayCount)
-                    .build());
         });
 
         return result;
