@@ -30,8 +30,8 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public class Type {
-    private String id;
     private String name;
+    private String id;
 
     public Type(String id) {
         this.id = id;

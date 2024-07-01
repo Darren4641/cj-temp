@@ -51,6 +51,7 @@ import static kr.co.cjdashboard.util.MessageUtil.exceptionMessage;
 public class DashboardServiceImpl implements DashboardService {
     private final ElasticsearchRestTemplate elasticsearchRestTemplate;
     private final CustomerService customerService;
+    private final TypeService typeService;
 
     //전체 등록 현황
     public TotalRegistrationStatusDto getTotalRegistrationStatus() {
@@ -60,18 +61,28 @@ public class DashboardServiceImpl implements DashboardService {
                 .addAggregation(AggregationBuilders.terms(COUNT).field(TYPE_KEYWORD))
                 .build();
 
+        List<String> defaultTypes = new ArrayList<>();
+        getTypes().forEach(defaultType -> defaultTypes.add(dynamicExtractType(defaultType)));
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
         Aggregations aggregations = searchHits.getAggregations();
         Terms terms = aggregations.get(COUNT);
 
         terms.getBuckets().forEach(bucket -> {
             String type = dynamicExtractType(bucket.getKeyAsString());
-            if(type.equals(NET)) {
+            if(type.equals(NET) || type.equals(SAN)) {
                 type = SAN_NET;
             }
             Long count = bucket.getDocCount();
             result.put(type, result.getOrDefault(type, 0L) + count);
         });
+        defaultTypes.forEach(defaultType -> {
+            String type = dynamicExtractType(defaultType);
+            if(type.equals(NET) || type.equals(SAN)) {
+                type = SAN_NET;
+            }
+            result.put(type, result.getOrDefault(type, 0L));
+        });
+
         TotalRegistrationStatusDto totalRegistrationStatusDto = new TotalRegistrationStatusDto();
         Map<String, Long> ossList = new HashMap<>();
         result.forEach((type, count) -> {
@@ -188,6 +199,8 @@ public class DashboardServiceImpl implements DashboardService {
         });
         List<Customer> result = new ArrayList<>(customerService.getCustomer().values());
         Collections.sort(result, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+
+        getTypes();
         return result;
     }
 
@@ -453,16 +466,21 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     private List<String> getTypes() {
+        List<String> result = new ArrayList<>();
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.termQuery(DATE, today()))
                 .addAggregation(AggregationBuilders.terms(TYPE_FILTER).field(TYPE_KEYWORD))
                 .build();
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
         Aggregations aggregations = searchHits.getAggregations();
-        Terms customerTerms = aggregations.get(TYPE_FILTER);
-        return customerTerms.getBuckets().stream()
-                .map(MultiBucketsAggregation.Bucket::getKeyAsString)
-                .collect(Collectors.toList());
+        Terms typeTerms = aggregations.get(TYPE_FILTER);
+        typeTerms.getBuckets().forEach(type -> {
+            if(typeService.getType().get(type.getKeyAsString()) == null) {
+                typeService.createTypeIfNotFound(type.getKeyAsString());
+            }
+        });
+        typeService.getType().forEach((typeId, type) -> result.add(typeId));
+        return result;
     }
 
     private List<String> getStatuses() {
