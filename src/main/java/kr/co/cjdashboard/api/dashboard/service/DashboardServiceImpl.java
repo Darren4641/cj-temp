@@ -445,6 +445,8 @@ public class DashboardServiceImpl implements DashboardService {
     private String extractTypePrefix(String type) {
         if (type != null && type.contains("_")) {
             return type.split("_")[0];
+        }else if(type.contains(SAN) || type.contains(NET)) {
+            return SAN_NET;
         }
         return type;
     }
