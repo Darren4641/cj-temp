@@ -16,7 +16,8 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilde
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,16 +51,18 @@ import static kr.co.cjdashboard.util.MessageUtil.exceptionMessage;
 public class DashboardServiceImpl implements DashboardService {
     private final ElasticsearchRestTemplate elasticsearchRestTemplate;
     private final CustomerService customerService;
-
+    private final TypeService typeService;
 
     //전체 등록 현황
     public TotalRegistrationStatusDto getTotalRegistrationStatus() {
         Map<String, Long> result = new HashMap<>();
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.termQuery(DATE, today()))
-                .addAggregation(AggregationBuilders.terms(COUNT).field(TYPE_KEYWORD))
+                .addAggregation(AggregationBuilders.terms(COUNT).field(TYPE))
                 .build();
 
+        List<String> defaultTypes = new ArrayList<>();
+        getTypes().forEach(defaultType -> defaultTypes.add(dynamicExtractType(defaultType)));
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
         Aggregations aggregations = searchHits.getAggregations();
         Terms terms = aggregations.get(COUNT);
@@ -72,6 +75,14 @@ public class DashboardServiceImpl implements DashboardService {
             Long count = bucket.getDocCount();
             result.put(type, result.getOrDefault(type, 0L) + count);
         });
+        defaultTypes.forEach(defaultType -> {
+            String type = dynamicExtractType(defaultType);
+            if(type.equals(NET) || type.equals(SAN)) {
+                type = SAN_NET;
+            }
+            result.put(type, result.getOrDefault(type, 0L));
+        });
+
         TotalRegistrationStatusDto totalRegistrationStatusDto = new TotalRegistrationStatusDto();
         Map<String, Long> ossList = new HashMap<>();
         result.forEach((type, count) -> {
@@ -93,12 +104,12 @@ public class DashboardServiceImpl implements DashboardService {
         Query query = new NativeSearchQueryBuilder()
                 .addAggregation(AggregationBuilders.filter(TODAY_AGG,
                                 QueryBuilders.matchQuery(DATE, today()))
-                        .subAggregation(AggregationBuilders.terms(TODAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD)
-                                .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE_KEYWORD))))
+                        .subAggregation(AggregationBuilders.terms(TODAY_CUSTOMER_FILTER).field(CUSTOMER)
+                                .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE))))
                 .addAggregation(AggregationBuilders.filter(YESTERDAY_AGG,
                                 QueryBuilders.matchQuery(DATE, yesterday()))
-                        .subAggregation(AggregationBuilders.terms(YESTERDAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD)
-                                .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE_KEYWORD))))
+                        .subAggregation(AggregationBuilders.terms(YESTERDAY_CUSTOMER_FILTER).field(CUSTOMER)
+                                .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE))))
                 .build();
 
         List<Customer> defaultCustomers = getCustomers();
@@ -188,6 +199,8 @@ public class DashboardServiceImpl implements DashboardService {
         });
         List<Customer> result = new ArrayList<>(customerService.getCustomer().values());
         Collections.sort(result, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+
+        getTypes();
         return result;
     }
 
@@ -312,7 +325,8 @@ public class DashboardServiceImpl implements DashboardService {
 
         Map<String, Map<String, Long>> dateCustomerCountMap = new HashMap<>();
         dateTerms.getBuckets().forEach(dateBucket -> {
-            String date = dateBucket.getKeyAsString();
+            String date = LocalDateTime.parse(dateBucket.getKeyAsString(), DateTimeFormatter.ISO_DATE_TIME)
+                    .format(DateTimeFormatter.ofPattern(DAY_FORMAT));
 
             Terms customerTerms = dateBucket.getAggregations().get(CUSTOMER_FILTER);
             customerTerms.getBuckets().forEach(customerBucket -> {
@@ -432,8 +446,6 @@ public class DashboardServiceImpl implements DashboardService {
     private String extractTypePrefix(String type) {
         if (type != null && type.contains("_")) {
             return type.split("_")[0];
-        }else if(type.contains(SAN) || type.contains(NET)) {
-            return SAN_NET;
         }
         return type;
     }
@@ -444,7 +456,7 @@ public class DashboardServiceImpl implements DashboardService {
                 return type.split("_")[1];
             }else if(type.contains(SAN) || type.contains(NET)) {
                 return SAN_NET;
-            } else {
+            }else {
                 return type.split("_")[0];
             }
         }
@@ -452,16 +464,21 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     private List<String> getTypes() {
+        List<String> result = new ArrayList<>();
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.termQuery(DATE, today()))
                 .addAggregation(AggregationBuilders.terms(TYPE_FILTER).field(TYPE))
                 .build();
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
         Aggregations aggregations = searchHits.getAggregations();
-        Terms customerTerms = aggregations.get(TYPE_FILTER);
-        return customerTerms.getBuckets().stream()
-                .map(MultiBucketsAggregation.Bucket::getKeyAsString)
-                .collect(Collectors.toList());
+        Terms typeTerms = aggregations.get(TYPE_FILTER);
+        typeTerms.getBuckets().forEach(type -> {
+            if(typeService.getType().get(type.getKeyAsString()) == null) {
+                typeService.createTypeIfNotFound(type.getKeyAsString());
+            }
+        });
+        typeService.getType().forEach((typeId, type) -> result.add(typeId));
+        return result;
     }
 
     private List<String> getStatuses() {
