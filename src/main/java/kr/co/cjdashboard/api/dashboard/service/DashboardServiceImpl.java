@@ -66,7 +66,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         terms.getBuckets().forEach(bucket -> {
             String type = dynamicExtractType(bucket.getKeyAsString());
-            if(type.equals(NET)) {
+            if(type.equals(NET) || type.equals(SAN)) {
                 type = SAN_NET;
             }
             Long count = bucket.getDocCount();
