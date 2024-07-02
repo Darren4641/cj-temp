@@ -50,18 +50,18 @@ public class CustomerService {
         customerMap.put("CJFS", new Customer("CJFS", "프레시웨이", "#00D59B", "/images/cj_freshway.png"));
         customerMap.put("CJOY", new Customer("CJOY", "올리브영", "#33FF57", "/images/cj_oliveyoung.png"));
         customerMap.put("CJCO", new Customer("CJCO", "주식회사", "#8C33FF", "/images/cj.png"));
-        customerMap.put("CJON", new Customer("CJON", "CJONS", "#000000", "/images/cj_olivenetworks.png"));
-        customerMap.put("CJON_COM", new Customer("CJON_COM", "CJONS CJON 공통", "#33FFD7", "/images/cj_olivenetworks.png", "COM"));
-        customerMap.put("CJON_CYBER", new Customer("CJON_CYBER", "CJONS 사이버보안", "#FF3380", "/images/cj_olivenetworks.png", "CYBER"));
-        customerMap.put("CJON_NW", new Customer("CJON_NW", "CJONS NW", "#3380FF", "/images/cj_olivenetworks.png", "NW"));
-        customerMap.put("CJON_CX", new Customer("CJON_CX", "CJONS CX팀", "#FFD700", "/images/cj_olivenetworks.png", "CX"));
-        customerMap.put("CJON_CJONE", new Customer("CJON_CJONE", "CJONS CJONE", "#80FF33", "/images/cj_olivenetworks.png", "CJONE"));
-        customerMap.put("CJON_HR", new Customer("CJON_HR", "CJONS HR", "#FF80FF", "/images/cj_olivenetworks.png", "HR"));
-        customerMap.put("CJON_UNIXCLD", new Customer("CJON_UNIXCLD", "CJONS UNIX 클라우드", "#80DFFF", "/images/cj_olivenetworks.png", "UNIXCLD"));
-        customerMap.put("CJON_X86CLD", new Customer("CJON_X86CLD", "CJONS X86 클라우드", "#FFD580", "/images/cj_olivenetworks.png", "X86CLD"));
-        customerMap.put("CJON_MON", new Customer("CJON_MON", "CJONS 모니터링", "#A1FF33", "/images/cj_olivenetworks.png", "MON"));
-        customerMap.put("CJON_BACKUP", new Customer("CJON_BACKUP", "CJONS 백업", "#FF3380", "/images/cj_olivenetworks.png", "BACKUP"));
-        customerMap.put("CJON_OO", new Customer("CJON_OO", "CJONS 원오더", "#338033", "/images/cj_olivenetworks.png", "원 오더"));
+        customerMap.put("CJON", new Customer("CJON", "CJONS", "#000000", "/images/cj_olivenetworks.png", null, "올리브네트웍스"));
+        customerMap.put("CJON_COM", new Customer("CJON_COM", "CJONS CJON 공통", "#33FFD7", "/images/cj_olivenetworks.png", "COM", "올리브네트웍스"));
+        customerMap.put("CJON_CYBER", new Customer("CJON_CYBER", "CJONS 사이버보안", "#FF3380", "/images/cj_olivenetworks.png", "CYBER", "올리브네트웍스"));
+        customerMap.put("CJON_NW", new Customer("CJON_NW", "CJONS NW", "#3380FF", "/images/cj_olivenetworks.png", "NW", "올리브네트웍스"));
+        customerMap.put("CJON_CX", new Customer("CJON_CX", "CJONS CX팀", "#FFD700", "/images/cj_olivenetworks.png", "CX", "올리브네트웍스"));
+        customerMap.put("CJON_CJONE", new Customer("CJON_CJONE", "CJONS CJONE", "#80FF33", "/images/cj_olivenetworks.png", "CJONE", "올리브네트웍스"));
+        customerMap.put("CJON_HR", new Customer("CJON_HR", "CJONS HR", "#FF80FF", "/images/cj_olivenetworks.png", "HR", "올리브네트웍스"));
+        customerMap.put("CJON_UNIXCLD", new Customer("CJON_UNIXCLD", "CJONS UNIX 클라우드", "#80DFFF", "/images/cj_olivenetworks.png", "UNIXCLD", "올리브네트웍스"));
+        customerMap.put("CJON_X86CLD", new Customer("CJON_X86CLD", "CJONS X86 클라우드", "#FFD580", "/images/cj_olivenetworks.png", "X86CLD", "올리브네트웍스"));
+        customerMap.put("CJON_MON", new Customer("CJON_MON", "CJONS 모니터링", "#A1FF33", "/images/cj_olivenetworks.png", "MON", "올리브네트웍스"));
+        customerMap.put("CJON_BACKUP", new Customer("CJON_BACKUP", "CJONS 백업", "#FF3380", "/images/cj_olivenetworks.png", "BACKUP", "올리브네트웍스"));
+        customerMap.put("CJON_OO", new Customer("CJON_OO", "CJONS 원오더", "#338033", "/images/cj_olivenetworks.png", "원 오더", "올리브네트웍스"));
         customerMap.put("PG", new Customer("PG", "PG", "#DFFF33", "/images/cj.png"));
         customerMap.put("CJPC", new Customer("CJPC", "파워캐스트", "#FF33A1", "/images/cj.png"));
         map.put(CJ, customerMap);
@@ -77,12 +77,15 @@ public class CustomerService {
         if(customerId.contains("CJON")) {
             customer = new Customer(customerId, customerId, null, "/images/cj_olivenetworks.png");
             customer.setSub(getSubName(customerId));
+            customer.setContext("올리브네트웍스");
         } else if(customerId.contains("CJEE")) {
             customer = new Customer(customerId, customerId, null, "/images/cj_enm.png");
-            customer.setSub("엔터테인먼트");
+            customer.setSub(getSubName(customerId));
+            customer.setContext("CJONS");
         } else if(customerId.contains("CJEC")) {
             customer = new Customer(customerId, customerId, null, "/images/cj_enm.png");
-            customer.setSub("커머스");
+            customer.setSub(getSubName(customerId));
+            customer.setContext("CJONS");
         } else {
             customer = new Customer(customerId, customerId, null, "/images/cj.png");
         }
