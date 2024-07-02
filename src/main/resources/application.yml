@@ -11,7 +11,7 @@ spring:
 elasticsearch:
   username: ${ELASTICSEARCH_USERNAME:elastic}
   password: ${ELASTICSEARCH_PASSWORD:elasticstack}
-  uris: ${ELASTICSEARCH_URIS:http://10.0.3.254:30001}
+  uris: ${ELASTICSEARCH_URIS:http://10.0.3.254:30007}
   indexname: ${ELASTICSEARCH_INDEX_NAME:cj-log}
   api:
     key: ${ELASTICSEARCH_API_KEY:UGN0QUZKQUJENm5BNzFabHhFcFE6RzhGVFBudUNTNS1tSU5FMHFoTlc3QQ==}
