@@ -32,12 +32,41 @@ public class Customer {
     private String id;
     private String name;
     private String color;
+    private String imagePath;
+    private String context;
+    private String sub;
 
 
-    public Customer(String id, String name, String color) {
+    public Customer(String id, String name, String color, String imagePath) {
         this.id = id;
         this.name = name;
         this.color = color;
+        this.imagePath = imagePath;
+    }
+
+    public Customer(String id, String name, String color, String imagePath, String sub) {
+        this.id = id;
+        this.name = name;
+        this.color = color;
+        this.imagePath = imagePath;
+        this.sub = sub;
+    }
+
+    public Customer(String id, String name, String color, String imagePath, String sub, String context) {
+        this.id = id;
+        this.name = name;
+        this.color = color;
+        this.imagePath = imagePath;
+        this.sub = sub;
+        this.context = context;
+    }
+
+    public void setSub(String sub) {
+        this.sub = sub;
+    }
+
+    public void setContext(String context) {
+        this.context = context;
     }
 
 //    public Customer(String id) {
