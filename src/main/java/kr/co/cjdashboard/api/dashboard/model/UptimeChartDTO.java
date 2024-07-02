@@ -34,6 +34,8 @@ public class UptimeChartDTO {
     private String customer;
     private String ip;
     private String uptime;
+    private String id;
+    private String content;
     private String limit;
 
 }

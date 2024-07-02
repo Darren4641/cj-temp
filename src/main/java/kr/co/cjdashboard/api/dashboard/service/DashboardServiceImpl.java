@@ -389,6 +389,8 @@ public class DashboardServiceImpl implements DashboardService {
                 .map(uptime ->
                         UptimeChartDTO.builder()
                                 .customer(customerService.getCustomerName(uptime.getContent().getCustomer()))
+                                .id(uptime.getContent().getId())
+                                .content(uptime.getContent().getContent())
                                 .ip(uptime.getContent().getIp())
                                 .limit(uptime.getContent().getOriginal())
                                 .uptime(uptime.getContent().getCurrent()).build())
