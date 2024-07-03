@@ -115,7 +115,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         List<Customer> defaultCustomers = getCustomers();
         List<String> defaultTypes = new ArrayList<>();
-        getTypes().forEach(defaultType -> defaultTypes.add(extractTypePrefix(defaultType)));
+        getTypes().forEach(defaultType -> defaultTypes.add(dynamicExtractType(defaultType)));
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
         Aggregations aggregations = searchHits.getAggregations();
 
@@ -128,7 +128,7 @@ public class DashboardServiceImpl implements DashboardService {
                     Terms typeTerms = todayCustomerBucket.getAggregations().get(TODAY_TYPE_FILTER);
                     typeTerms.getBuckets().forEach(typeBucket -> {
 
-                        String type = extractTypePrefix(typeBucket.getKeyAsString());
+                        String type = dynamicExtractType(typeBucket.getKeyAsString());
                         long count = typeBucket.getDocCount();
                         todayStatusCountMap.computeIfAbsent(customer, k -> new HashMap<>())
                                 .merge(type, count, Long::sum);
@@ -144,7 +144,7 @@ public class DashboardServiceImpl implements DashboardService {
                     String customer = yesterdayCustomerBucket.getKeyAsString();
                     Terms typeTerms = yesterdayCustomerBucket.getAggregations().get(YESTERDAY_TYPE_FILTER);
                     typeTerms.getBuckets().forEach(typeBucket -> {
-                        String type = extractTypePrefix(typeBucket.getKeyAsString());
+                        String type = dynamicExtractType(typeBucket.getKeyAsString());
                         long count = typeBucket.getDocCount();
                         yesterdayStatusCountMap.computeIfAbsent(customer, k -> new HashMap<>())
                                 .merge(type, count, Long::sum);
@@ -155,25 +155,28 @@ public class DashboardServiceImpl implements DashboardService {
         //기본 Type 삽입
         defaultCustomers.forEach(defaultCustomer -> {
             todayStatusCountMap.putIfAbsent(defaultCustomer.getId(), defaultTypes.stream()
-                    .collect(Collectors.toMap(defaultType -> extractTypePrefix(defaultType), count -> 0L, (existing, replacement) -> existing)));
+                    .collect(Collectors.toMap(defaultType -> dynamicExtractType(defaultType), count -> 0L, (existing, replacement) -> existing)));
             yesterdayStatusCountMap.putIfAbsent(defaultCustomer.getId(), defaultTypes.stream()
-                    .collect(Collectors.toMap(defaultType -> extractTypePrefix(defaultType), count -> 0L, (existing, replacement) -> existing)));
+                    .collect(Collectors.toMap(defaultType -> dynamicExtractType(defaultType), count -> 0L, (existing, replacement) -> existing)));
         });
 
         List<CollectionStatusByCustomerDto> result = new ArrayList<>();
         todayStatusCountMap.forEach((customer, countMap) -> {
             List<CollectionStatusByCustomerDto.CollectionStatusByCustomerDetailDto> dataList = new ArrayList<>();
             countMap.forEach((type, todayCount) -> {
-                long yesterdayCount = 0;
-                String extractType = extractTypePrefix(type);
-                if(yesterdayStatusCountMap.get(customer) != null && yesterdayStatusCountMap.get(customer).get(extractType) != null) {
-                    yesterdayCount = yesterdayStatusCountMap.get(customer).get(extractType);
+                if(type.equals(LINUX) || type.equals(WINDOWS) || type.equals(AIX) || type.equals(SAN_NET) || type.equals(STO)) {
+                    long yesterdayCount = 0;
+                    String dynamicType = dynamicExtractType(type);
+                    if(yesterdayStatusCountMap.get(customer) != null && yesterdayStatusCountMap.get(customer).get(dynamicType) != null) {
+                        yesterdayCount = yesterdayStatusCountMap.get(customer).get(dynamicType);
+                    }
+                    dataList.add(CollectionStatusByCustomerDto.CollectionStatusByCustomerDetailDto.builder()
+                            .type(dynamicType)
+                            .todayCount(todayCount)
+                            .yesterdayCount(yesterdayCount)
+                            .build());
                 }
-                dataList.add(CollectionStatusByCustomerDto.CollectionStatusByCustomerDetailDto.builder()
-                        .type(extractType)
-                        .todayCount(todayCount)
-                        .yesterdayCount(yesterdayCount)
-                        .build());
+
             });
             result.add(CollectionStatusByCustomerDto.builder()
                     .customer(customerService.getCustomerName(customer))
