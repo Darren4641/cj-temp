@@ -26,5 +26,5 @@ COPY ${JAR_FILE} app.jar
 ENTRYPOINT ["java", "-Duser.timezone=${TZ}", "-jar", "app.jar"]
 
 
-## docker build --platform linux/amd64 -t jayutest.best:56789/cj-dashboard/cj-dashboard:4.7 .
+## docker build --platform linux/amd64 -t jayutest.best:56789/cj-dashboard/cj-dashboard:6.1 .
 ## docker run -d --name cj-dashboard jayutest.best:56789/cj-dashboard/cj-dashboard:4.6

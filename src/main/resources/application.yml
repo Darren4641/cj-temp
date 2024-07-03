@@ -11,7 +11,7 @@ spring:
 elasticsearch:
   username: ${ELASTICSEARCH_USERNAME:elastic}
   password: ${ELASTICSEARCH_PASSWORD:elasticstack}
-  uris: ${ELASTICSEARCH_URIS:http://10.0.3.254:30001}
+  uris: ${ELASTICSEARCH_URIS:http://10.0.3.254:30007}
   indexname: ${ELASTICSEARCH_INDEX_NAME:cj-log}
   api:
     key: ${ELASTICSEARCH_API_KEY:UGN0QUZKQUJENm5BNzFabHhFcFE6RzhGVFBudUNTNS1tSU5FMHFoTlc3QQ==}
@@ -31,7 +31,7 @@ message:
     basename: i18n/message-kr
 
 cors:
-  allowed-origins: ${CORS_URI:http://localhost:6001,https://jayutest.best:13006,http://jayutest.best:3249,http://10.0.1.204:3249}
+  allowed-origins: ${CORS_URI:http://10.0.3.254:31824,http://localhost:6001,https://jayutest.best:13006,http://jayutest.best:3249,http://10.0.1.204:3249}
   allowed-methods: GET,POST,PUT,DELETE,OPTIONS
   allowed-headers: '*'
   max-age: 3600
