@@ -62,7 +62,7 @@ public class CustomerService {
         customerMap.put("CJON_MON", new Customer("CJON_MON", "CJONS 모니터링", "#A1FF33", "/images/cj_olivenetworks.png", "MON", "올리브네트웍스"));
         customerMap.put("CJON_BACKUP", new Customer("CJON_BACKUP", "CJONS 백업", "#FF3380", "/images/cj_olivenetworks.png", "BACKUP", "올리브네트웍스"));
         customerMap.put("CJON_OO", new Customer("CJON_OO", "CJONS 원오더", "#338033", "/images/cj_olivenetworks.png", "원 오더", "올리브네트웍스"));
-        customerMap.put("PG", new Customer("PG", "PG", "#DFFF33", "/images/cj.png"));
+        customerMap.put("PG", new Customer("PG", "PG", "#DFFF33", "/images/cj_olivenetworks.png", "PG", "올리브네트웍스"));
         customerMap.put("CJPC", new Customer("CJPC", "파워캐스트", "#FF33A1", "/images/cj.png"));
         map.put(CJ, customerMap);
         this.customerMap = map.get(CJ);
