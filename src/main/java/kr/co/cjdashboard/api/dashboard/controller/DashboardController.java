@@ -46,31 +46,36 @@ public class DashboardController {
 
     @GetMapping("/total")
     public CommonResult totalRegistrationStatus() {
-        return responseService.getSingleResult(dashboardServiceImpl.getTotalRegistrationStatus());
+        return responseService.getSingleResult(dashboardServiceImpl.getTotalRegistrationStatusGroupByIPAndType());
     }
 
     @GetMapping("/customer/collection")
     public CommonResult collectionStatusByCustomer() {
-        return responseService.getSingleResult(dashboardServiceImpl.getCollectionStatusByCustomer());
+        return responseService.getSingleResult(dashboardServiceImpl.getCollectionStatusGroupByCustomerAndType());
     }
 
     @GetMapping("/customer/{customer}/status")
     public CommonResult statusByCustomer(@PathVariable(name = "customer") String customer) {
-        return responseService.getSingleResult(dashboardServiceImpl.statusByCustomer(customer));
+        return responseService.getSingleResult(dashboardServiceImpl.getStatusGroupByIPAndTypeAndStatusByCustomer(customer));
+    }
+
+    @GetMapping("/customer/status")
+    public CommonResult statusAllCustomer() {
+        return responseService.getSingleResult(dashboardServiceImpl.getStatusGroupByCustomerAndIPAndTypeAndStatus());
     }
 
     @GetMapping("/customer/abnormal")
     public CommonResult abnormalStatusByCustomer() {
-        return responseService.getSingleResult(dashboardServiceImpl.abnormalStatusByCustomer());
+        return responseService.getSingleResult(dashboardServiceImpl.getAbnormalStatusGroupByCustomer());
     }
 
     @GetMapping("/uptime")
     public CommonResult uptimeChart() {
-        return responseService.getSingleResult(dashboardServiceImpl.uptimeChart());
+        return responseService.getSingleResult(dashboardServiceImpl.getUptimeChart());
     }
 
     @GetMapping("/type/abnormal")
     public CommonResult abnormalStatusByType() {
-        return responseService.getSingleResult(dashboardServiceImpl.abnormalStatusByType());
+        return responseService.getSingleResult(dashboardServiceImpl.getAbnormalStatusGroupByType());
     }
 }

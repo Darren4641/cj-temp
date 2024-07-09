@@ -13,14 +13,18 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 
-import javax.net.ssl.SSLContext;
+import javax.net.ssl.*;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -59,23 +63,6 @@ public class ElasticSearchConfig {
     @Value("${elasticsearch.uris}")
     private String uris;
 
-    @Value("${elasticsearch.api.key}")
-    private String apiKey;
-
-    @Value("${elasticsearch.ssl.enabled}")
-    private boolean sslEnabled;
-
-    @Value("${elasticsearch.ssl.keystore.location}")
-    private String keystoreLocation;
-
-    @Value("${elasticsearch.ssl.keystore.password}")
-    private String keystorePassword;
-
-    @Value("${elasticsearch.ssl.truststore.location}")
-    private String truststoreLocation;
-
-    @Value("${elasticsearch.ssl.truststore.password}")
-    private String truststorePassword;
 
     @Bean
     public RestHighLevelClient elasticsearchClient() {
@@ -91,26 +78,22 @@ public class ElasticSearchConfig {
                 .map(this::createHttpHost)
                 .collect(Collectors.toList());
 
-//        List<HttpHost> hosts = Stream.of(uris.split(","))
-//                .map(String::trim)
-//                .map(this::createHttpHost)
-//                .collect(Collectors.toList());
         try {
-            RestClientBuilder restClientBuilder = RestClient.builder(hosts.toArray(new HttpHost[0]));
+            RestClientBuilder restClientBuilder = RestClient.builder(hosts.toArray(new HttpHost[0]))
+                    .setHttpClientConfigCallback(httpClientBuilder -> {
+                        try {
+                            SSLContext sslContext = disableSslVerification();
 
+                            // Install the all-trusting host verifier
+                            httpClientBuilder.setSSLContext(sslContext)
+                                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+                        } catch (Exception e) {
+                            log.error("Error setting up SSL context", e);
+                        }
 
-            if(sslEnabled) {
-                System.out.println("SSL enable");
-                SSLContext sslContext = createSSLContext(keystoreLocation, keystorePassword, truststoreLocation, truststorePassword);
-                restClientBuilder.setHttpClientConfigCallback(httpClientBuilder ->
-                        httpClientBuilder.setSSLContext(sslContext)
-                                .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
-                                .setDefaultCredentialsProvider(credsProv));
+                        return httpClientBuilder.setDefaultCredentialsProvider(credsProv);
+                    });
 
-            } else {
-                restClientBuilder.setHttpClientConfigCallback(httpClientBuilder ->
-                        httpClientBuilder.setDefaultCredentialsProvider(credsProv));
-            }
             uriList.stream()
                     .map(URI::getPath)
                     .filter(path -> path != null && !path.isEmpty())
@@ -123,7 +106,6 @@ public class ElasticSearchConfig {
             e.printStackTrace();
             throw new IllegalArgumentException();
         }
-
     }
 
     @Bean
@@ -146,36 +128,35 @@ public class ElasticSearchConfig {
         return new HttpHost(host, port, scheme);
     }
 
-    private HttpHost createHttpHost(String uri) {
-        String[] parts = uri.replace("https://", "").replace("http://", "").split(":");
-        System.out.println(parts[0]);
-        System.out.println(parts[1]);
-        String scheme = uri.startsWith("https") ? "https" : "http";
-        String host = parts[0];
-        int port = Integer.parseInt(parts[1]);
-        return new HttpHost(host, port, scheme);
+    // SSL 인증서를 무시하도록 설정
+    public static SSLContext disableSslVerification() {
+        try {
+            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+            }};
+
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+            return sc;
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
-
-    private SSLContext createSSLContext(String keystorePath, String keystorePassword, String truststorePath, String truststorePassword) throws Exception {
-        KeyStore keystore = KeyStore.getInstance("PKCS12");
-        System.out.println("keystorePath >> " + keystorePath);
-        System.out.println("truststorePath >> " + truststorePath);
-        try (InputStream keystoreStream = new FileInputStream(keystorePath)) {
-            keystore.load(keystoreStream, !keystorePassword.isEmpty() ? keystorePassword.toCharArray() : null);
-        }
-
-        KeyStore truststore = KeyStore.getInstance("PKCS12");
-        try (InputStream truststoreStream = new FileInputStream(truststorePath)) {
-            truststore.load(truststoreStream, !truststorePassword.isEmpty() ? truststorePassword.toCharArray() : null);
-        }
-
-        return SSLContexts.custom()
-                .loadKeyMaterial(keystore, keystorePassword.toCharArray())
-                .loadTrustMaterial(truststore, null)
-                .build();
+    public static HostnameVerifier allHostsValid() {
+        HostnameVerifier allHostsValid = (hostname, session) -> true;
+        HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+        return allHostsValid;
     }
 }
-
-
-

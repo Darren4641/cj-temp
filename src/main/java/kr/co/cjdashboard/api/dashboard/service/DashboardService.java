@@ -26,19 +26,21 @@ import java.util.List;
  * 6/13/24        darren       최초 생성
  */
 public interface DashboardService {
-    TotalRegistrationStatusDto getTotalRegistrationStatus();
+    TotalRegistrationStatusDto getTotalRegistrationStatusGroupByIPAndType();
 
-    List<CollectionStatusByCustomerDto> getCollectionStatusByCustomer();
+    List<CollectionStatusByCustomerDto> getCollectionStatusGroupByCustomerAndType();
 
     List<Customer> getCustomers();
 
-    StatusByCustomerDTO statusByCustomer(String customer);
+    StatusByCustomerDTO getStatusGroupByIPAndTypeAndStatusByCustomer(String customer);
 
-    List<AbnormalStatusByCustomerDto> abnormalStatusByCustomer();
+    List<StatusByCustomerDTO> getStatusGroupByCustomerAndIPAndTypeAndStatus();
 
-    List<UptimeChartDTO> uptimeChart();
+    List<AbnormalStatusByCustomerDto> getAbnormalStatusGroupByCustomer();
 
-    List<AbnormalStatusByTypeDto> abnormalStatusByType();
+    List<UptimeChartDTO> getUptimeChart();
+
+    List<AbnormalStatusByTypeDto> getAbnormalStatusGroupByType();
 
 
 }

@@ -5,6 +5,8 @@ import kr.co.cjdashboard.api.dashboard.model.*;
 import kr.co.cjdashboard.exception.InvalidException;
 import lombok.RequiredArgsConstructor;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.bucket.composite.ParsedComposite;
+import org.elasticsearch.search.aggregations.bucket.composite.TermsValuesSourceBuilder;
 import org.elasticsearch.search.aggregations.bucket.filter.Filter;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
@@ -12,6 +14,7 @@ import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static kr.co.cjdashboard.api.dashboard.constant.FieldName.*;
+import static kr.co.cjdashboard.api.dashboard.constant.FieldName.YESTERDAY_IP_FILTER;
 import static kr.co.cjdashboard.api.dashboard.service.DateComponent.*;
 import static kr.co.cjdashboard.util.MessageUtil.exceptionMessage;
 
@@ -55,32 +59,31 @@ public class DashboardServiceImpl implements DashboardService {
     private final TypeService typeService;
 
     //전체 등록 현황
-    public TotalRegistrationStatusDto getTotalRegistrationStatus() {
+    public TotalRegistrationStatusDto getTotalRegistrationStatusGroupByIPAndType() {
         Map<String, Long> result = new HashMap<>();
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.termQuery(DATE, today()))
-                .addAggregation(AggregationBuilders.terms(COUNT).field(TYPE_KEYWORD))
+                .addAggregation(AggregationBuilders.terms(IP_FILTER).field(IP_KEYWORD)
+                        .subAggregation(AggregationBuilders.terms(TYPE_FILTER).field(TYPE_KEYWORD)).size(Integer.MAX_VALUE))
+                .withSourceFilter(new FetchSourceFilter(new String[]{}, new String[]{}))
                 .build();
 
         List<String> defaultTypes = new ArrayList<>();
         getTypes().forEach(defaultType -> defaultTypes.add(dynamicExtractType(defaultType)));
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
         Aggregations aggregations = searchHits.getAggregations();
-        Terms terms = aggregations.get(COUNT);
-
-        terms.getBuckets().forEach(bucket -> {
-            String type = dynamicExtractType(bucket.getKeyAsString());
-            if(type.equals(NET) || type.equals(SAN)) {
-                type = SAN_NET;
-            }
-            Long count = bucket.getDocCount();
-            result.put(type, result.getOrDefault(type, 0L) + count);
+        Terms ipTerms = aggregations.get(IP_FILTER);
+        ipTerms.getBuckets().forEach(ipBucket -> {
+            Terms typeTerms = ipBucket.getAggregations().get(TYPE_FILTER);
+            typeTerms.getBuckets().forEach(typeBucket -> {
+                String type = dynamicExtractType(typeBucket.getKeyAsString());
+                result.put(type, result.getOrDefault(type, 0L) + 1);
+            });
         });
+
         defaultTypes.forEach(defaultType -> {
             String type = dynamicExtractType(defaultType);
-            if(type.equals(NET) || type.equals(SAN)) {
-                type = SAN_NET;
-            }
+
             result.put(type, result.getOrDefault(type, 0L));
         });
 
@@ -101,16 +104,16 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     // 고객사별 수집 현황
-    public List<CollectionStatusByCustomerDto> getCollectionStatusByCustomer() {
+    public List<CollectionStatusByCustomerDto> getCollectionStatusGroupByCustomerAndType() {
         Query query = new NativeSearchQueryBuilder()
                 .addAggregation(AggregationBuilders.filter(TODAY_AGG,
                                 QueryBuilders.matchQuery(DATE, today()))
-                        .subAggregation(AggregationBuilders.terms(TODAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD)
-                                .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE_KEYWORD))))
+                        .subAggregation(AggregationBuilders.terms(TODAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD).size(Integer.MAX_VALUE)
+                                .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE_KEYWORD)).size(Integer.MAX_VALUE)))
                 .addAggregation(AggregationBuilders.filter(YESTERDAY_AGG,
                                 QueryBuilders.matchQuery(DATE, yesterday()))
-                        .subAggregation(AggregationBuilders.terms(YESTERDAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD)
-                                .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE_KEYWORD))))
+                        .subAggregation(AggregationBuilders.terms(YESTERDAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD).size(Integer.MAX_VALUE)
+                                .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE_KEYWORD)).size(Integer.MAX_VALUE)))
                 .build();
 
         List<Customer> defaultCustomers = getCustomers();
@@ -191,7 +194,7 @@ public class DashboardServiceImpl implements DashboardService {
     public List<Customer> getCustomers() {
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.matchQuery(DATE, today()))
-                .addAggregation(AggregationBuilders.terms(CUSTOMER_FILTER).field(CUSTOMER_KEYWORD).size(CUSTOMER_SIZE))
+                .addAggregation(AggregationBuilders.terms(CUSTOMER_FILTER).field(CUSTOMER_KEYWORD).size(Integer.MAX_VALUE))
                 .build();
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
         Aggregations aggregations = searchHits.getAggregations();
@@ -209,8 +212,8 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
 
-    // 계열사별 현황
-    public StatusByCustomerDTO statusByCustomer(String customer) {
+    // 고객사별 현황 CSR.ver
+    public StatusByCustomerDTO getStatusGroupByIPAndTypeAndStatusByCustomer(String customer) {
         if(customerService.getCustomerName(customer) == null) {
             throw new InvalidException(exceptionMessage("customer.not_found"));
         }
@@ -219,14 +222,14 @@ public class DashboardServiceImpl implements DashboardService {
                 .withQuery(QueryBuilders.matchQuery(CUSTOMER, customer))
                 .addAggregation(AggregationBuilders.filter(TODAY_AGG,
                                 QueryBuilders.matchQuery(DATE, today()))
-                        .subAggregation(AggregationBuilders.terms(TODAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD)
-                                .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE_KEYWORD)
-                                        .subAggregation(AggregationBuilders.terms(TODAY_STATUS_FILTER).field(STATUS_KEYWORD)))))
+                        .subAggregation(AggregationBuilders.terms(TODAY_IP_FILTER).field(IP_KEYWORD).size(Integer.MAX_VALUE)
+                                .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE_KEYWORD).size(Integer.MAX_VALUE)
+                                        .subAggregation(AggregationBuilders.terms(TODAY_STATUS_FILTER).field(STATUS_KEYWORD).size(Integer.MAX_VALUE)))))
                 .addAggregation(AggregationBuilders.filter(YESTERDAY_AGG,
                                 QueryBuilders.matchQuery(DATE, yesterday()))
-                        .subAggregation(AggregationBuilders.terms(YESTERDAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD)
-                                .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE_KEYWORD)
-                                        .subAggregation(AggregationBuilders.terms(YESTERDAY_STATUS_FILTER).field(STATUS_KEYWORD)))))
+                        .subAggregation(AggregationBuilders.terms(YESTERDAY_IP_FILTER).field(IP_KEYWORD).size(Integer.MAX_VALUE)
+                                .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE_KEYWORD).size(Integer.MAX_VALUE)
+                                        .subAggregation(AggregationBuilders.terms(YESTERDAY_STATUS_FILTER).field(STATUS_KEYWORD).size(Integer.MAX_VALUE)))))
                 .build();
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
 
@@ -237,9 +240,9 @@ public class DashboardServiceImpl implements DashboardService {
         Aggregations aggregations = searchHits.getAggregations();
         //오늘 자 집계
         Filter todayFilter = aggregations.get(TODAY_AGG);
-        Terms todayCustomerTerms = todayFilter.getAggregations().get(TODAY_CUSTOMER_FILTER);
-        todayCustomerTerms.getBuckets().forEach(todayCustomerBucket -> {
-            Terms typeTerms = todayCustomerBucket.getAggregations().get(TODAY_TYPE_FILTER);
+        Terms todayIPTerms = todayFilter.getAggregations().get(TODAY_IP_FILTER);
+        todayIPTerms.getBuckets().forEach(todayIPBucket -> {
+            Terms typeTerms = todayIPBucket.getAggregations().get(TODAY_TYPE_FILTER);
             typeTerms.getBuckets().forEach(typeBucket -> {
                 String type = dynamicExtractType(typeBucket.getKeyAsString());
                 Terms statusTerms = typeBucket.getAggregations().get(TODAY_STATUS_FILTER);
@@ -248,7 +251,7 @@ public class DashboardServiceImpl implements DashboardService {
                     long count = statusBucket.getDocCount();
 
                     todayStatusCountMap.computeIfAbsent(type, k -> new HashMap<>())
-                            .merge(status, count, Long::sum);
+                            .merge(status, 1L, Long::sum);
                 });
                 for (String defaultStatus : defaultStatuses) {
                     todayStatusCountMap.get(type).putIfAbsent(defaultStatus, 0L);
@@ -258,9 +261,9 @@ public class DashboardServiceImpl implements DashboardService {
         //어제 자 집계
         Map<String, Map<String, Long>> yesterdayStatusCountMap = new HashMap<>();
         Filter yesterdayFilter = aggregations.get(YESTERDAY_AGG);
-        Terms yesterdayCustomerTerms = yesterdayFilter.getAggregations().get(YESTERDAY_CUSTOMER_FILTER);
-        yesterdayCustomerTerms.getBuckets().forEach(yesterdayCustomerBucket -> {
-            Terms typeTerms = yesterdayCustomerBucket.getAggregations().get(YESTERDAY_TYPE_FILTER);
+        Terms yesterdayIPTerms = yesterdayFilter.getAggregations().get(YESTERDAY_IP_FILTER);
+        yesterdayIPTerms.getBuckets().forEach(yesterdayIPBucket -> {
+            Terms typeTerms = yesterdayIPBucket.getAggregations().get(YESTERDAY_TYPE_FILTER);
             typeTerms.getBuckets().forEach(typeBucket -> {
                 String type = dynamicExtractType(typeBucket.getKeyAsString());
                 Terms statusTerms = typeBucket.getAggregations().get(YESTERDAY_STATUS_FILTER);
@@ -318,8 +321,141 @@ public class DashboardServiceImpl implements DashboardService {
                 .build();
 
     }
+
+    // 고객사별 현황 SSR.ver
+    public List<StatusByCustomerDTO> getStatusGroupByCustomerAndIPAndTypeAndStatus() {
+        //Customers Map 갱신
+        List<Customer> defaultCustomers = getCustomers();
+        List<StatusByCustomerDTO> result = new ArrayList<>();
+        Query query = new NativeSearchQueryBuilder()
+                .addAggregation(AggregationBuilders.filter(TODAY_AGG,
+                                QueryBuilders.matchQuery(DATE, today()))
+                        .subAggregation(AggregationBuilders.terms(TODAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD).size(Integer.MAX_VALUE)
+                                .subAggregation(AggregationBuilders.terms(TODAY_IP_FILTER).field(IP_KEYWORD).size(Integer.MAX_VALUE)
+                                        .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE_KEYWORD).size(Integer.MAX_VALUE)
+                                                .subAggregation(AggregationBuilders.terms(TODAY_STATUS_FILTER).field(STATUS_KEYWORD).size(Integer.MAX_VALUE))))))
+                .addAggregation(AggregationBuilders.filter(YESTERDAY_AGG,
+                                QueryBuilders.matchQuery(DATE, yesterday()))
+                        .subAggregation(AggregationBuilders.terms(YESTERDAY_CUSTOMER_FILTER).field(CUSTOMER_KEYWORD).size(Integer.MAX_VALUE)
+                                .subAggregation(AggregationBuilders.terms(YESTERDAY_IP_FILTER).field(IP_KEYWORD).size(Integer.MAX_VALUE)
+                                        .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE_KEYWORD).size(Integer.MAX_VALUE)
+                                                .subAggregation(AggregationBuilders.terms(YESTERDAY_STATUS_FILTER).field(STATUS_KEYWORD).size(Integer.MAX_VALUE))))))
+                .build();
+        SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
+
+        List<String> defaultTypes = getTypes();
+        List<String> defaultStatuses = getStatuses();
+        //Map<String, Map<String, Long>> todayStatusCountMap = new HashMap<>();
+        Map<String, Map<String, Map<String, Long>>> todayCustomerCountMap = new HashMap<>();
+        Aggregations aggregations = searchHits.getAggregations();
+        //오늘 자 집계
+        Filter todayFilter = aggregations.get(TODAY_AGG);
+        Terms todayCustomerTerms = todayFilter.getAggregations().get(TODAY_CUSTOMER_FILTER);
+        todayCustomerTerms.getBuckets().forEach(todayCustomerBucket -> {
+            String customer = customerService.getCustomerName(todayCustomerBucket.getKeyAsString());
+            Terms todayIPTerms = todayCustomerBucket.getAggregations().get(TODAY_IP_FILTER);
+            todayIPTerms.getBuckets().forEach(todayIPBucket -> {
+                Terms typeTerms = todayIPBucket.getAggregations().get(TODAY_TYPE_FILTER);
+                typeTerms.getBuckets().forEach(typeBucket -> {
+                    String type = dynamicExtractType(typeBucket.getKeyAsString());
+                    Terms statusTerms = typeBucket.getAggregations().get(TODAY_STATUS_FILTER);
+                    statusTerms.getBuckets().forEach(statusBucket -> {
+                        String status = statusBucket.getKeyAsString();
+                        todayCustomerCountMap.computeIfAbsent(customer, t -> new HashMap<>())
+                                .computeIfAbsent(type, c -> new HashMap<>()).merge(status, 1L, Long::sum);
+
+                    });
+                });
+            });
+        });
+
+
+        //어제 자 집계
+        //Map<String, Map<String, Long>> yesterdayStatusCountMap = new HashMap<>();
+        Map<String, Map<String, Map<String, Long>>> yesterdayCustomerCountMap = new HashMap<>();
+        Filter yesterdayFilter = aggregations.get(YESTERDAY_AGG);
+        Terms yesterdayCustomerTerms = yesterdayFilter.getAggregations().get(YESTERDAY_CUSTOMER_FILTER);
+        yesterdayCustomerTerms.getBuckets().forEach(yesterdayCustomerBucket -> {
+            String customer = customerService.getCustomerName(yesterdayCustomerBucket.getKeyAsString());
+            Terms yesterdayIPTerms = yesterdayCustomerBucket.getAggregations().get(YESTERDAY_IP_FILTER);
+            yesterdayIPTerms.getBuckets().forEach(yesterdayIPBucket -> {
+                Terms typeTerms = yesterdayIPBucket.getAggregations().get(YESTERDAY_TYPE_FILTER);
+                typeTerms.getBuckets().forEach(typeBucket -> {
+                    String type = dynamicExtractType(typeBucket.getKeyAsString());
+                    Terms statusTerms = typeBucket.getAggregations().get(YESTERDAY_STATUS_FILTER);
+                    statusTerms.getBuckets().forEach(statusBucket -> {
+                        String status = statusBucket.getKeyAsString();
+                        yesterdayCustomerCountMap.computeIfAbsent(customer, t -> new HashMap<>())
+                                .computeIfAbsent(type, c -> new HashMap<>()).merge(status, 1L, Long::sum);
+                    });
+                });
+            });
+        });
+
+
+        //수집되지 않은 고객사 목록 추가
+        defaultCustomers.forEach(defaultCustomer -> {
+            todayCustomerCountMap.computeIfAbsent(defaultCustomer.getName(), t -> new HashMap<>());
+            yesterdayCustomerCountMap.computeIfAbsent(defaultCustomer.getName(), t -> new HashMap<>());
+        });
+        //수집 되지 않은 Type 의 Status를 0으로 채움
+        defaultTypes.forEach(defaultType -> {
+            todayCustomerCountMap.forEach((todayCustomer, typeMap) -> {
+                typeMap.putIfAbsent(dynamicExtractType(defaultType), defaultStatuses.stream()
+                        .collect(Collectors.toMap(status -> status, count -> 0L)));
+            });
+            yesterdayCustomerCountMap.forEach((yesterdayCustomer, typeMap) -> {
+                typeMap.putIfAbsent(dynamicExtractType(defaultType), defaultStatuses.stream()
+                        .collect(Collectors.toMap(status -> status, count -> 0L)));
+            });
+        });
+        //전일 대비 계산 및 DTO생성
+        todayCustomerCountMap.forEach((todayCustomer, typeMap) -> {
+            AtomicBoolean isSave = new AtomicBoolean(false);
+            List<StatusByCustomerDTO.TypeData> typeDataList = new ArrayList<>();
+            typeMap.forEach((type, statusCountMap) -> {
+                List<StatusByCustomerDTO.StatusData> statusDataList = new ArrayList<>();
+                statusCountMap.forEach((status, count) -> {
+                    if(type.equals(LINUX) || type.equals(WINDOWS) || type.equals(AIX) || type.equals(SAN_NET) || type.equals(STO)) {
+                        isSave.set(true);
+                        long yesterdayCount = 0;
+
+                        if(yesterdayCustomerCountMap.get(todayCustomer) != null &&
+                                yesterdayCustomerCountMap.get(todayCustomer).get(type) != null &&
+                                yesterdayCustomerCountMap.get(todayCustomer).get(type).get(status) != null) {
+                            yesterdayCount = yesterdayCustomerCountMap.get(todayCustomer).get(type).get(status);
+                        }
+                        statusDataList.add(StatusByCustomerDTO.StatusData.builder()
+                                .status(status)
+                                .todayCount(count)
+                                .yesterdayCount(yesterdayCount)
+                                .build());
+                    }
+                });
+                if(isSave.get() && type.equals(LINUX) || type.equals(WINDOWS) || type.equals(AIX) || type.equals(SAN_NET) || type.equals(STO)) {
+                    typeDataList.add(StatusByCustomerDTO.TypeData.builder()
+                            .type(type)
+                            .data(statusDataList)
+                            .build());
+
+                }
+            });
+            if(!typeDataList.isEmpty()) {
+                result.add(StatusByCustomerDTO.builder()
+                        .customer(todayCustomer)
+                        .data(typeDataList)
+                        .build());
+            }
+
+
+        });
+
+        return result;
+
+    }
+
     // 고객사별 Abnormal 건수 추이
-    public List<AbnormalStatusByCustomerDto> abnormalStatusByCustomer() {
+    public List<AbnormalStatusByCustomerDto> getAbnormalStatusGroupByCustomer() {
         List<AbnormalStatusByCustomerDto> results = new ArrayList<>();
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.boolQuery()
@@ -327,8 +463,8 @@ public class DashboardServiceImpl implements DashboardService {
                                 .gte(sevenDaysAgo())
                                 .lte(today()))
                         .must(QueryBuilders.matchQuery(STATUS, ABNORMAL)))
-                .addAggregation(AggregationBuilders.terms(DATE_FILTER).field(DATE)
-                        .subAggregation(AggregationBuilders.terms(CUSTOMER_FILTER).field(CUSTOMER_KEYWORD)))
+                .addAggregation(AggregationBuilders.terms(DATE_FILTER).field(DATE_KEYWORD).size(Integer.MAX_VALUE)
+                        .subAggregation(AggregationBuilders.terms(CUSTOMER_FILTER).field(CUSTOMER_KEYWORD).size(Integer.MAX_VALUE)).size(Integer.MAX_VALUE))
                 .build();
 
         List<Customer> defaultCustomers = getCustomers();
@@ -338,8 +474,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         Map<String, Map<String, Long>> dateCustomerCountMap = new HashMap<>();
         dateTerms.getBuckets().forEach(dateBucket -> {
-            String date = LocalDateTime.parse(dateBucket.getKeyAsString(), DateTimeFormatter.ISO_DATE_TIME)
-                    .format(DateTimeFormatter.ofPattern(DAY_FORMAT));
+            String date = dateBucket.getKeyAsString();
 
             Terms customerTerms = dateBucket.getAggregations().get(CUSTOMER_FILTER);
             customerTerms.getBuckets().forEach(customerBucket -> {
@@ -382,7 +517,7 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     // Uptime 분포도
-    public List<UptimeChartDTO> uptimeChart() {
+    public List<UptimeChartDTO> getUptimeChart() {
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(DATE, today()))
@@ -402,16 +537,16 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     // 항목 별 Abnormal 전체 건수별
-    public List<AbnormalStatusByTypeDto> abnormalStatusByType() {
+    public List<AbnormalStatusByTypeDto> getAbnormalStatusGroupByType() {
         List<AbnormalStatusByTypeDto> result = new ArrayList<>();
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.matchQuery(STATUS, ABNORMAL))
                 .addAggregation(AggregationBuilders.filter(TODAY_AGG,
                                 QueryBuilders.matchQuery(DATE, today()))
-                        .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE_KEYWORD)))
+                        .subAggregation(AggregationBuilders.terms(TODAY_TYPE_FILTER).field(TYPE_KEYWORD).size(Integer.MAX_VALUE)))
                 .addAggregation(AggregationBuilders.filter(YESTERDAY_AGG,
                                 QueryBuilders.matchQuery(DATE, yesterday()))
-                        .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE_KEYWORD)))
+                        .subAggregation(AggregationBuilders.terms(YESTERDAY_TYPE_FILTER).field(TYPE_KEYWORD).size(Integer.MAX_VALUE)))
                 .build();
 
         List<String> defaultTypes = getTypes();
@@ -471,7 +606,7 @@ public class DashboardServiceImpl implements DashboardService {
         if(type != null && type.contains("_")) {
             if(type.contains(OSS)) {
                 return type.split("_")[1];
-            }else if(type.contains(SAN) || type.contains(NET)) {
+            }else if(type.split("_")[0].contains(SAN) || type.split("_")[0].contains(NET)) {
                 return SAN_NET;
             }else {
                 return type.split("_")[0];
@@ -484,7 +619,7 @@ public class DashboardServiceImpl implements DashboardService {
         List<String> result = new ArrayList<>();
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.termQuery(DATE, today()))
-                .addAggregation(AggregationBuilders.terms(TYPE_FILTER).field(TYPE_KEYWORD))
+                .addAggregation(AggregationBuilders.terms(TYPE_FILTER).field(TYPE_KEYWORD).size(Integer.MAX_VALUE))
                 .build();
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
         Aggregations aggregations = searchHits.getAggregations();
@@ -501,7 +636,7 @@ public class DashboardServiceImpl implements DashboardService {
     private List<String> getStatuses() {
         Query query = new NativeSearchQueryBuilder()
                 .withQuery(QueryBuilders.termQuery(DATE, today()))
-                .addAggregation(AggregationBuilders.terms(STATUS_FILTER).field(STATUS_KEYWORD))
+                .addAggregation(AggregationBuilders.terms(STATUS_FILTER).field(STATUS_KEYWORD).size(Integer.MAX_VALUE))
                 .build();
         SearchHits<CjLog> searchHits = elasticsearchRestTemplate.search(query, CjLog.class);
         Aggregations aggregations = searchHits.getAggregations();
@@ -510,9 +645,5 @@ public class DashboardServiceImpl implements DashboardService {
                 .map(MultiBucketsAggregation.Bucket::getKeyAsString)
                 .collect(Collectors.toList());
     }
-
-
-
-
 
 }

@@ -35,6 +35,7 @@ public class FieldName {
     public static final String HOSTNAME = "Hostname";
 
     public static final String IP = "IP";
+    public static final String IP_KEYWORD = IP + ".keyword";
 
     public static final String GROUP = "Group";
 
@@ -58,6 +59,11 @@ public class FieldName {
     public static final String COMPARE_DATE = "compare_date_filter";
 
     public static final String COUNT = "count";
+
+    public static final String IP_FILTER = "ip_filter";
+
+    public static final String TODAY_IP_FILTER = "today_ip_filter";
+    public static final String YESTERDAY_IP_FILTER = "yesterday_ip_filter";
 
     public static final String CUSTOMER_FILTER = "customer_filter";
     public static final String TODAY_CUSTOMER_FILTER = "today_customer_filter";
