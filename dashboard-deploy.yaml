@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cj-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cj-dashboard
+  template:
+    metadata:
+      labels:
+        app: cj-dashboard
+    spec:
+      containers:
+        - name: cj-dashboard
+          image: jayutest.best:56789/cj-dashboard/cj-dashboard:3.0.52
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: MODE
+              value: "test"
+            - name: TZ
+              value: "Asia/Seoul"
+            - name: ELASTICSEARCH_USERNAME
+              value: "elastic"
+            - name: ELASTICSEARCH_PASSWORD
+              value: "elasticstack"
+            - name: SESSION_CHECK
+              value: "true"
+            - name: TOP_COUNT
+              value: "10"
+            - name: ELASTICSEARCH_URIS
+              value: "https://elasticsearch-ssl:9201"
+            - name: ELASTICSEARCH_INDEX_NAME
+              value: "cj-log"
+            - name: GRAFANA_HOST
+              value: "http://10.0.1.205:3000"
+            - name: CORS_URI
+              value: "http://10.0.3.254:31824,http://localhost:6001,https://jayutest.best:13006,http://jayutest.best:3249,http://10.0.1.204:3249"
+      imagePullSecrets:
+        - name: devkey
+
