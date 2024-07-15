@@ -4,8 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.List;
-
 /**
  * -------------------------------------------------------------------------------------
  * ::::::'OO::::'OOO::::'OO:::'OO:'OO::::'OO:'OOOOOOOO:::'OOOOOOO::'OO::::'OO:'OO....OO:
@@ -34,6 +32,9 @@ public class UptimeChartDTO {
     private String customer;
     private String ip;
     private String uptime;
+    private String status;
+    private String key;
+    private String content;
     private String limit;
 
 }

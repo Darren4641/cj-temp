@@ -1,4 +1,4 @@
-//package kr.co.cjdashboard.api.dashboard.repository;
+package kr.co.cjdashboard.api.dashboard.repository;//package kr.co.cjdashboard.api.dashboard.repository;
 //
 //import kr.co.cjdashboard.api.dashboard.entity.CjLog;
 //import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;

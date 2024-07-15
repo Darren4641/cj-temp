@@ -15,6 +15,7 @@ public class CommonResult {
 
 	// 응답 코드 번호 : > 0 정상, < 0 비정상
 	private int code;
+	private String commandDate;
 
 	// 응답 메시지
 	private String msg;

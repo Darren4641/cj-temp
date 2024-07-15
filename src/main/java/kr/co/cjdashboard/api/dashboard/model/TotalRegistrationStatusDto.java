@@ -1,9 +1,6 @@
 package kr.co.cjdashboard.api.dashboard.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
-
-import java.util.Map;
 
 /**
  * -------------------------------------------------------------------------------------
@@ -32,12 +29,8 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TotalRegistrationStatusDto {
-    @JsonProperty(value = "OSS")
-    private Map<String, Long> OSS;
-    @JsonProperty(value = "STO")
-    private Long STO;
-    @JsonProperty(value = "SAN(NET)")
-    private Long SAN_NET;
-
+    private String type;
+    private Long count;
+    private Long yesterdayCount;
 
 }

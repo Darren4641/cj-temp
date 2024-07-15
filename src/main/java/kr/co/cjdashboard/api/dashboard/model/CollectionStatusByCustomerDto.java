@@ -32,6 +32,7 @@ import java.util.List;
 @AllArgsConstructor
 public class CollectionStatusByCustomerDto {
     private String customer;
+    private String key;
     private List<CollectionStatusByCustomerDetailDto> data;
 
     public void setData(List<CollectionStatusByCustomerDetailDto> data) {

@@ -32,6 +32,7 @@ import java.util.List;
 @AllArgsConstructor
 public class StatusByCustomerDTO {
     private String customer;
+    private String key;
     private List<TypeData> data;
 
 

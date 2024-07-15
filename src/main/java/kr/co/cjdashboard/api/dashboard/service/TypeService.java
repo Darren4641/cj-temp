@@ -1,6 +1,5 @@
 package kr.co.cjdashboard.api.dashboard.service;
 
-import kr.co.cjdashboard.api.dashboard.model.Customer;
 import kr.co.cjdashboard.api.dashboard.model.Type;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -46,22 +46,23 @@ public class CustomerService {
         customerMap.put("CJEC", new Customer("CJEC", "ENM커머스", "#5733A1", "/images/cj_enm.png", "커머스"));
         customerMap.put("CJCGV", new Customer("CJCGV", "CGV", "#FFA133", "/images/cj_cgv.png"));
         customerMap.put("CJFV", new Customer("CJFV", "푸드빌", "#FFBD33", "/images/cj_foodville.png"));
-        customerMap.put("CJEE", new Customer("CJEE", "ENM엔터테인먼트", "#707070", "/images/cj_enm.png", "엔터테인먼트"));
+        customerMap.put("CJEE", new Customer("CJEE", "ENM엔터", "#707070", "/images/cj_enm.png", "엔터테인먼트"));
         customerMap.put("CJFS", new Customer("CJFS", "프레시웨이", "#00D59B", "/images/cj_freshway.png"));
         customerMap.put("CJOY", new Customer("CJOY", "올리브영", "#33FF57", "/images/cj_oliveyoung.png"));
         customerMap.put("CJCO", new Customer("CJCO", "주식회사", "#8C33FF", "/images/cj.png"));
-        customerMap.put("CJON", new Customer("CJON", "CJONS", "#000000", "/images/cj_olivenetworks.png", null, "올리브네트웍스"));
-        customerMap.put("CJON_COM", new Customer("CJON_COM", "CJONS CJON 공통", "#33FFD7", "/images/cj_olivenetworks.png", "공통", "올리브네트웍스"));
+        customerMap.put("CJON", new Customer("CJON", "CJONS", "#ececec", "/images/cj_olivenetworks.png", null, "올리브네트웍스"));
+        customerMap.put("CJON_COM", new Customer("CJON_COM", "CJONS 공통", "#33FFD7", "/images/cj_olivenetworks.png", "공통", "올리브네트웍스"));
         customerMap.put("CJON_CYBER", new Customer("CJON_CYBER", "CJONS 사이버보안", "#FF3380", "/images/cj_olivenetworks.png", "사이버보안", "올리브네트웍스"));
         customerMap.put("CJON_NW", new Customer("CJON_NW", "CJONS NW", "#3380FF", "/images/cj_olivenetworks.png", "NW", "올리브네트웍스"));
         customerMap.put("CJON_CX", new Customer("CJON_CX", "CJONS CX팀", "#FFD700", "/images/cj_olivenetworks.png", "CX팀", "올리브네트웍스"));
         customerMap.put("CJON_CJONE", new Customer("CJON_CJONE", "CJONS CJONE", "#80FF33", "/images/cj_olivenetworks.png", "CJONE", "올리브네트웍스"));
         customerMap.put("CJON_HR", new Customer("CJON_HR", "CJONS HR", "#FF80FF", "/images/cj_olivenetworks.png", "HR", "올리브네트웍스"));
-        customerMap.put("CJON_UNIXCLD", new Customer("CJON_UNIXCLD", "CJONS UNIX 클라우드", "#80DFFF", "/images/cj_olivenetworks.png", "UNIX 클라우드", "올리브네트웍스"));
-        customerMap.put("CJON_X86CLD", new Customer("CJON_X86CLD", "CJONS X86 클라우드", "#FFD580", "/images/cj_olivenetworks.png", "X86 클라우드", "올리브네트웍스"));
+        customerMap.put("CJON_UNIXCLD", new Customer("CJON_UNIXCLD", "CJONS UNIX\n클라우드", "#80DFFF", "/images/cj_olivenetworks.png", "UNIX 클라우드", "올리브네트웍스"));
+        customerMap.put("CJON_X86CLD", new Customer("CJON_X86CLD", "CJONS X86\n클라우드", "#FFD580", "/images/cj_olivenetworks.png", "X86 클라우드", "올리브네트웍스"));
         customerMap.put("CJON_MON", new Customer("CJON_MON", "CJONS 모니터링", "#A1FF33", "/images/cj_olivenetworks.png", "모니터링", "올리브네트웍스"));
         customerMap.put("CJON_BACKUP", new Customer("CJON_BACKUP", "CJONS 백업", "#FF3380", "/images/cj_olivenetworks.png", "백업", "올리브네트웍스"));
         customerMap.put("CJON_OO", new Customer("CJON_OO", "CJONS 원오더", "#338033", "/images/cj_olivenetworks.png", "원 오더", "올리브네트웍스"));
+        customerMap.put("CJON_VDI", new Customer("CJON_VDI", "CJONS VDI", "#6666CC", "/images/cj_olivenetworks.png", "VDI", "올리브네트웍스"));
         customerMap.put("PG", new Customer("PG", "PG", "#DFFF33", "/images/cj_olivenetworks.png", "PG", "올리브네트웍스"));
         customerMap.put("CJPC", new Customer("CJPC", "파워캐스트", "#FF33A1", "/images/cj_olivenetworks.png", "파워캐스트", "올리브네트웍스"));
         map.put(CJ, customerMap);
@@ -75,7 +76,7 @@ public class CustomerService {
     public void createCustomerIfNotFound(String customerId) {
         Customer customer = null;
         if(customerId.contains("CJON")) {
-            customer = new Customer(customerId, customerId, null, "/images/cj_olivenetworks.png");
+            customer = new Customer(customerId, customerId.replace("CJON", "CJONS"), null, "/images/cj_olivenetworks.png");
             customer.setSub(getSubName(customerId));
             customer.setContext("올리브네트웍스");
         } else if(customerId.contains("CJEE")) {

@@ -39,6 +39,8 @@ public class FieldName {
 
     public static final String GROUP = "Group";
 
+    public static final String GROUP_KEYWORD = GROUP + ".keyword";
+
     public static final String CONTENT = "Content";
 
     public static final String ORIGINAL = "Original";
@@ -77,6 +79,10 @@ public class FieldName {
     public static final String TODAY_STATUS_FILTER = "today_status_filter";
     public static final String YESTERDAY_STATUS_FILTER = "yesterday_status_filter";
 
+    public static final String TODAY_GROUP_FILTER = "today_group_filter";
+
+    public static final String YESTERDAY_GROUP_FILTER = "today_group_filter";
+
     public static final String ABNORMAL = "Abnormal";
     public static final String UPTIME = "Uptime";
 
@@ -91,6 +97,7 @@ public class FieldName {
     public static final String SAN_NET = "SAN(NET)";
 
     public static final String CJ = "CJ";
+    public static final String CJONS = "CJONS";
 
     public static final String DAY_FORMAT = "yyyy-MM-dd";
 

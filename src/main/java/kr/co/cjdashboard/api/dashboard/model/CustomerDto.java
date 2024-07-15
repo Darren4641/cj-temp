@@ -1,8 +1,8 @@
 package kr.co.cjdashboard.api.dashboard.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
+
 
 /**
  * -------------------------------------------------------------------------------------
@@ -16,21 +16,20 @@ import lombok.Getter;
  * :......:::..:::::..:::::..::::::.......:::..:::::..:::.......::::.......:::..::::..::
  * <p>
  * packageName    : kr.co.cjdashboard.api.dashboard.model
- * fileName       : CollectionStatusByCustomer
+ * fileName       : Customer
  * author         : darren
- * date           : 6/14/24
+ * date           : 6/18/24
  * description    :
  * ===========================================================
  * DATE              AUTHOR             NOTE
  * -----------------------------------------------------------
- * 6/14/24        darren       최초 생성
+ * 6/18/24        darren       최초 생성
  */
+
 @Getter
-@Builder
 @AllArgsConstructor
-public class AbnormalStatusByTypeDto {
-    private String group;
-    private Long todayCount;
-    private Long yesterdayCount;
+public class CustomerDto {
+    private String name;
+    private Long count;
 
 }

@@ -1,8 +1,7 @@
-package kr.co.cjdashboard.api.dashboard.model;
+package kr.co.cjdashboard.exception;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
  * -------------------------------------------------------------------------------------
@@ -15,22 +14,23 @@ import lombok.Getter;
  * ::OOOOOO:: OO:::..OO:::: OO::::. OOOOOOO:: OO:::. OO:. OOOOOOO::. OOOOOOO:: OO::..OO:
  * :......:::..:::::..:::::..::::::.......:::..:::::..:::.......::::.......:::..::::..::
  * <p>
- * packageName    : kr.co.cjdashboard.api.dashboard.model
- * fileName       : CollectionStatusByCustomer
+ * packageName    : kr.zelen.service.authentication.exception
+ * fileName       : InvalidException
  * author         : darren
- * date           : 6/14/24
+ * date           : 3/5/24
  * description    :
  * ===========================================================
  * DATE              AUTHOR             NOTE
  * -----------------------------------------------------------
- * 6/14/24        darren       최초 생성
+ * 3/5/24        darren       최초 생성
  */
-@Getter
-@Builder
-@AllArgsConstructor
-public class AbnormalStatusByTypeDto {
-    private String group;
-    private Long todayCount;
-    private Long yesterdayCount;
+@ResponseStatus(HttpStatus.BAD_REQUEST)
+public class SessionException extends RuntimeException {
+    public SessionException(String message) {
+        super(message);
+    }
 
+    public SessionException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

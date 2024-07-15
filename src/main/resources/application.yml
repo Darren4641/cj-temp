@@ -1,29 +1,35 @@
 server:
   port: 8080
+  servlet:
+    session:
+      timeout: 2592000s
+      cookie:
+        same-site: None
+        http-only: true
+        secure: true
 
 mode: ${MODE:test}
 
 spring:
+  security:
+    ignore:
+      ssl:
+        validation: true
   output:
     ansi:
       enabled: always
+session:
+  check: ${SESSION_CHECK:true}
+top:
+  count: ${TOP_COUNT:10}
 
 elasticsearch:
   username: ${ELASTICSEARCH_USERNAME:elastic}
   password: ${ELASTICSEARCH_PASSWORD:elasticstack}
-  uris: ${ELASTICSEARCH_URIS:http://10.0.3.254:30007}
+  uris: ${ELASTICSEARCH_URIS:https://10.0.3.254:30018}
   indexname: ${ELASTICSEARCH_INDEX_NAME:cj-log}
-  api:
-    key: ${ELASTICSEARCH_API_KEY:UGN0QUZKQUJENm5BNzFabHhFcFE6RzhGVFBudUNTNS1tSU5FMHFoTlc3QQ==}
-  ssl:
-    enabled: ${ELASTICSEARCH_SSL_ENABLED:false}
-    keystore:
-      location: ${ELASTICSEARCH_KEYSTORE_LOCATION:/Users/darren/develop/cj/cj-pem/keystore.p12}
-      password: ${ELASTICSEARCH_KEYSTORE_PASSWORD:MTAwNDEwMDQ=}
-    truststore:
-      location: ${ELASTICSEARCH_TRUSTSTORE_LOCATION:/Users/darren/develop/cj/cj-pem/truststore.p12}
-      password: ${ELASTICSEARCH_TRUSTSTORE_PASSWORD:MTAwNDEwMDQ=}
-
+grafana:
+  host: ${GRAFANA_HOST:http://10.0.1.205:3000}
 
 
 message:

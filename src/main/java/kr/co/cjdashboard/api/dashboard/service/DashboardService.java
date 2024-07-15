@@ -2,6 +2,7 @@ package kr.co.cjdashboard.api.dashboard.service;
 
 import kr.co.cjdashboard.api.dashboard.model.*;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -26,7 +27,7 @@ import java.util.List;
  * 6/13/24        darren       최초 생성
  */
 public interface DashboardService {
-    TotalRegistrationStatusDto getTotalRegistrationStatusGroupByIPAndType();
+    List<TotalRegistrationStatusDto> getTotalRegistrationStatusGroupByIPAndType();
 
     List<CollectionStatusByCustomerDto> getCollectionStatusGroupByCustomerAndType();
 
@@ -40,7 +41,7 @@ public interface DashboardService {
 
     List<UptimeChartDTO> getUptimeChart();
 
-    List<AbnormalStatusByTypeDto> getAbnormalStatusGroupByType();
+    List<AbnormalStatusByTypeDto> getAbnormalStatusGroupByType() throws IOException;
 
 
 }

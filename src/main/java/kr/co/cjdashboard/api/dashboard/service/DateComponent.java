@@ -7,8 +7,6 @@ import javax.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 
 import static kr.co.cjdashboard.api.dashboard.constant.FieldName.DAY_FORMAT;
 
@@ -41,7 +39,7 @@ public class DateComponent {
 
     private LocalDate testDate = LocalDate.of(2024, 6, 9);
     private static String staticMode;
-    private static LocalDate staticDate;
+    public static LocalDate staticDate;
 
     // 초기화 메서드
     @PostConstruct
@@ -67,26 +65,6 @@ public class DateComponent {
         return staticMode.equals("test") ?
                 staticDate.minusDays(7).format(formatter)
                 : LocalDate.now().minusDays(7).format(formatter);
-    }
-
-    public static List<String> getDatesBetween() {
-        List<String> dates = new ArrayList<>();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DAY_FORMAT);
-        LocalDate startDate = null;
-        LocalDate endDate = null;
-        if(staticMode.equals("test")) {
-            startDate = staticDate.minusDays(6);
-            endDate = staticDate;
-        }else {
-            startDate = LocalDate.now().minusDays(6);
-            endDate = LocalDate.now();
-        }
-        while (!startDate.isAfter(endDate)) {
-            dates.add(startDate.format(formatter));
-            startDate = startDate.plusDays(1);
-        }
-
-        return dates;
     }
 
     public static String getYesterdayToString(String date) {

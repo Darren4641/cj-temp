@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static kr.co.cjdashboard.api.dashboard.service.DateComponent.today;
+
 @Service
 public class ResponseService {
 
@@ -91,6 +93,7 @@ public class ResponseService {
 	private void setSuccessResult(CommonResult result) {
 		result.setSuccess(true);
 		result.setCode(CommonResponse.SUCCESS.getCode());
+		result.setCommandDate(today());
 		result.setMsg(CommonResponse.SUCCESS.getMsg());
 	}
 }
